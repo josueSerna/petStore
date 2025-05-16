@@ -5,9 +5,6 @@ namespace PetStore.API.Data
 {
     public class PetStoreDbContext : DbContext
     {
-        /// <summary>
-        /// Constructor del contexto que recibe opciones de configuración.
-        /// </summary>
         /// <param name="options">Opciones de configuración del contexto</param>
         public PetStoreDbContext(DbContextOptions<PetStoreDbContext> options) : base(options) { }
 
