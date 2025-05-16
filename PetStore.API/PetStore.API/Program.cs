@@ -10,16 +10,14 @@ builder.Services.AddDbContext<PetStoreDbContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 
 builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer(); // Swagger depende de esto
-builder.Services.AddSwaggerGen();           // Aquí se registra Swagger
-
+builder.Services.AddEndpointsApiExplorer(); 
+builder.Services.AddSwaggerGen();           
 var app = builder.Build();
 
-// ? Activar Swagger solo en entorno de desarrollo
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI(); // Esto habilita /swagger
+    app.UseSwaggerUI(); 
 }
 
 app.UseHttpsRedirection();
