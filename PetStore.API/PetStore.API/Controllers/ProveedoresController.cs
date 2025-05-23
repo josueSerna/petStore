@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using PetStore.API.Data;
 using PetStore.API.Models;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace PetStore.API.Controllers
@@ -21,7 +22,7 @@ namespace PetStore.API.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Proveedor>>> GetProveedores()
         {
-            return await _context.Proveedores.Include(p => p.Productos).ToListAsync();
+            return await _context.Proveedores.Include(p => p.Productos).OrderBy(p => p.Nombre).ToListAsync();
         }
 
         [HttpGet("{id}")]
@@ -35,6 +36,9 @@ namespace PetStore.API.Controllers
         [HttpPost]
         public async Task<ActionResult<Proveedor>> PostProveedor(Proveedor proveedor)
         {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             _context.Proveedores.Add(proveedor);
             await _context.SaveChangesAsync();
             return CreatedAtAction(nameof(GetProveedor), new { id = proveedor.Id }, proveedor);
@@ -44,6 +48,7 @@ namespace PetStore.API.Controllers
         public async Task<IActionResult> PutProveedor(int id, Proveedor proveedor)
         {
             if (id != proveedor.Id) return BadRequest();
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
             _context.Entry(proveedor).State = EntityState.Modified;
 
@@ -53,14 +58,8 @@ namespace PetStore.API.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!_context.Proveedores.Any(e => e.Id == id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                if (!_context.Proveedores.Any(e => e.Id == id)) return NotFound();
+                else throw;
             }
 
             return NoContent();

@@ -3,8 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using PetStore.API.Data;
 using PetStore.API.Models;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace PetStore.API.Controllers
 {
@@ -22,7 +22,7 @@ namespace PetStore.API.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Producto>>> GetProductos()
         {
-            return await _context.Productos.Include(p => p.Proveedor).ToListAsync();
+            return await _context.Productos.Include(p => p.Proveedor).OrderBy(p => p.Nombre).ToListAsync();
         }
 
         [HttpGet("{id}")]
@@ -33,19 +33,23 @@ namespace PetStore.API.Controllers
             return producto;
         }
 
+        [HttpGet("por-proveedor/{proveedorId}")]
+        public async Task<ActionResult<IEnumerable<Producto>>> GetProductosPorProveedor(int proveedorId)
+        {
+            return await _context.Productos.Where(p => p.ProveedorId == proveedorId).Include(p => p.Proveedor).ToListAsync();
+        }
+
         [HttpPost]
         public async Task<ActionResult<Producto>> PostProducto(Producto producto)
         {
-            // Validar que el proveedor exista
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
             var proveedorExistente = await _context.Proveedores.FindAsync(producto.ProveedorId);
             if (proveedorExistente == null)
-            {
                 return BadRequest("El proveedor especificado no existe.");
-            }
 
-            // Evitar que EF intente insertar el objeto Proveedor completo
             producto.Proveedor = null;
-
             _context.Productos.Add(producto);
             await _context.SaveChangesAsync();
 
@@ -55,19 +59,14 @@ namespace PetStore.API.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutProducto(int id, Producto producto)
         {
-            if (id != producto.Id)
-                return BadRequest();
+            if (id != producto.Id) return BadRequest();
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            // Validar que el proveedor exista
             var proveedorExistente = await _context.Proveedores.FindAsync(producto.ProveedorId);
             if (proveedorExistente == null)
-            {
                 return BadRequest("El proveedor especificado no existe.");
-            }
 
-            // Evitar que EF intente actualizar el objeto Proveedor
             producto.Proveedor = null;
-
             _context.Entry(producto).State = EntityState.Modified;
 
             try
@@ -76,14 +75,8 @@ namespace PetStore.API.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!_context.Productos.Any(e => e.Id == id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                if (!_context.Productos.Any(e => e.Id == id)) return NotFound();
+                else throw;
             }
 
             return NoContent();
