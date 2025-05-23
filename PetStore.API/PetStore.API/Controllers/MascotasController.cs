@@ -42,8 +42,18 @@ namespace PetStore.API.Controllers
         public async Task<IActionResult> PutMascota(int id, Mascota mascota)
         {
             if (id != mascota.Id) return BadRequest();
-            _context.Entry(mascota).State = EntityState.Modified;
+
+            var mascotaExistente = await _context.Mascotas.FindAsync(id);
+            if (mascotaExistente == null) return NotFound();
+
+            mascotaExistente.Nombre = mascota.Nombre;
+            mascotaExistente.Especie = mascota.Especie;
+            mascotaExistente.Raza = mascota.Raza;
+            mascotaExistente.Edad = mascota.Edad;
+            mascotaExistente.ClienteId = mascota.ClienteId;
+
             await _context.SaveChangesAsync();
+
             return NoContent();
         }
 
@@ -58,5 +68,4 @@ namespace PetStore.API.Controllers
             return NoContent();
         }
     }
-
 }

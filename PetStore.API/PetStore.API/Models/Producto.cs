@@ -10,6 +10,6 @@ namespace PetStore.API.Models
         public int Stock { get; set; }
 
         public int ProveedorId { get; set; }
-        public Proveedor Proveedor { get; set; }
+        public Proveedor? Proveedor { get; set; }
     }
 }

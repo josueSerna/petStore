@@ -41,9 +41,65 @@ namespace PetStore.API.Controllers
         [HttpPut("{id}")]
         public async Task<IActionResult> PutCliente(int id, Cliente cliente)
         {
-            if (id != cliente.Id) return BadRequest();
-            _context.Entry(cliente).State = EntityState.Modified;
+            if (id != cliente.Id)
+                return BadRequest();
+
+            var clienteExistente = await _context.Clientes
+                .Include(c => c.Mascotas)
+                .FirstOrDefaultAsync(c => c.Id == id);
+
+            if (clienteExistente == null)
+                return NotFound();
+
+            // Actualizar campos simples del cliente
+            clienteExistente.Nombre = cliente.Nombre;
+            clienteExistente.Telefono = cliente.Telefono;
+            clienteExistente.Email = cliente.Email;
+
+            clienteExistente.Mascotas ??= new List<Mascota>();
+
+            var mascotasEnviadasIds = cliente.Mascotas?.Select(m => m.Id).ToList() ?? new List<int>();
+
+            // Eliminar mascotas que ya no están en la lista enviada
+            var mascotasParaEliminar = clienteExistente.Mascotas
+                .Where(m => !mascotasEnviadasIds.Contains(m.Id))
+                .ToList();
+
+            foreach (var mascota in mascotasParaEliminar)
+            {
+                _context.Mascotas.Remove(mascota);
+            }
+
+            // Actualizar o agregar mascotas enviadas
+            foreach (var mascotaEnviada in cliente.Mascotas ?? new List<Mascota>())
+            {
+                var mascotaExistente = clienteExistente.Mascotas
+                    .FirstOrDefault(m => m.Id == mascotaEnviada.Id);
+
+                if (mascotaExistente != null)
+                {
+                    // Actualizar mascota existente
+                    mascotaExistente.Nombre = mascotaEnviada.Nombre;
+                    mascotaExistente.Especie = mascotaEnviada.Especie;
+                    mascotaExistente.Raza = mascotaEnviada.Raza;
+                    mascotaExistente.Edad = mascotaEnviada.Edad;
+                }
+                else
+                {
+                    // Agregar nueva mascota
+                    clienteExistente.Mascotas.Add(new Mascota
+                    {
+                        Nombre = mascotaEnviada.Nombre,
+                        Especie = mascotaEnviada.Especie,
+                        Raza = mascotaEnviada.Raza,
+                        Edad = mascotaEnviada.Edad,
+                        ClienteId = clienteExistente.Id
+                    });
+                }
+            }
+
             await _context.SaveChangesAsync();
+
             return NoContent();
         }
 
@@ -58,5 +114,4 @@ namespace PetStore.API.Controllers
             return NoContent();
         }
     }
-
 }

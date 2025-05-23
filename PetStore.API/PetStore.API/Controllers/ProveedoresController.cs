@@ -2,6 +2,8 @@
 using Microsoft.EntityFrameworkCore;
 using PetStore.API.Data;
 using PetStore.API.Models;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace PetStore.API.Controllers
 {
@@ -42,8 +44,25 @@ namespace PetStore.API.Controllers
         public async Task<IActionResult> PutProveedor(int id, Proveedor proveedor)
         {
             if (id != proveedor.Id) return BadRequest();
+
             _context.Entry(proveedor).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!_context.Proveedores.Any(e => e.Id == id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
             return NoContent();
         }
 
@@ -58,5 +77,4 @@ namespace PetStore.API.Controllers
             return NoContent();
         }
     }
-
 }

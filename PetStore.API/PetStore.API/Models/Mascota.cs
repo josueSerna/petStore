@@ -1,4 +1,5 @@
-﻿using PetStore.API.Models;
+﻿using System.Text.Json.Serialization;
+using PetStore.API.Models;
 
 namespace PetStore.API.Models
 {
@@ -11,6 +12,9 @@ namespace PetStore.API.Models
         public int Edad { get; set; }
 
         public int ClienteId { get; set; }
-        public Cliente Cliente { get; set; }
+
+        [JsonIgnore]
+        [System.ComponentModel.DataAnnotations.Schema.NotMapped] // ← Esto evita validación y mapeo
+        public Cliente? Cliente { get; set; }
     }
 }
